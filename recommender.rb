@@ -1,7 +1,13 @@
-require_relative './similarity_recommender'
+require_relative './metrics'
 require 'debug'
 
-class EuclideanRecommender < SimilarityRecommender
+class Recommender
+  attr_reader :class_scores, :distance_measure
+
+  def initialize(class_scores = {}, distance_measure = Metrics.method(:euclidean_distance))
+    @class_scores = class_scores
+    @distance_measure = distance_measure
+  end
 
   def get_recommendations(person)
     class_scores[person].inject({}) do |memo, (class_name, score)|
@@ -37,16 +43,17 @@ class EuclideanRecommender < SimilarityRecommender
     1.0/(1.0 + distance(person, other_person))
   end
 
-  def distance(person, other_person)
-    return 0.0 if person == other_person
-    squares = class_scores[person].map do |class_name, pref|
-      next unless pref && class_scores[other_person][class_name]
-      (class_scores[other_person][class_name]-pref)**2
-    end.compact
-    if squares.empty?
-      10_000 # dummy large value if no overlapping scores
-    else
-      Math.sqrt(squares.sum) / squares.size
-    end
+  def distance(person, other)
+    # Must only include class dimensions where both students have scores
+    person_vec, other_vec = class_scores[person].values.each_with_index.map do |score, i|
+      next unless score && class_scores[other].values[i]
+      [score, class_scores[other].values[i]]
+    end.compact.transpose
+
+    # Return arbitrarily large value if no overlapping scores
+    # Effectively mimicing a distance of inifinity.
+    return 10_000 if [person_vec, other_vec].any?(&:empty?)
+
+    distance_measure.call(person_vec, other_vec)
   end
 end

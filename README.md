@@ -14,5 +14,5 @@ To run the model and get predicted scores for Ginny Weasley you can run:
 
 Please refer to the [blog
 article](https://www.vector-logic.com/blog/posts/implementing-nearest-neighbout-recommendations-in-ruby)
-for a more detailed discussion of this recommendation model is
+for a more detailed discussion of how this recommendation model is
 implemented.
